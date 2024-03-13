@@ -9,4 +9,4 @@ bright_utils.preprocess(0.2, False)
 """
 train the model
 """
-train(0.2, 250, 0.0001, 128, 500, 10, True, False)
+train(0.2, 10, 0.0001, 128, 500, 10, True, True)
