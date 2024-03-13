@@ -2,6 +2,7 @@ scipy
 numpy
 pandas
 matplotlib
+seaborn
 torch
 torch_geometric
 scikit-learn
