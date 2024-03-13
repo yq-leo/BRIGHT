@@ -54,6 +54,16 @@ def train(ratio, epoch_num, lr, dim, k, gamma, use_rwr=True, use_gcn=True):
 
     # device = torch.device('cuda:0')
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    gpu_info = {
+        "is_available": torch.cuda.is_available(),
+        "count": torch.cuda.device_count(),
+        "name": torch.cuda.get_device_name(0) if torch.cuda.is_available() else "N/A",
+        "capability": torch.cuda.get_device_capability(0) if torch.cuda.is_available() else "N/A",
+        "memory_allocated": torch.cuda.memory_allocated(0) if torch.cuda.is_available() else "N/A",
+        "memory_reserved": torch.cuda.memory_reserved(0) if torch.cuda.is_available() else "N/A"
+    }
+    print(device)
+    print(gpu_info)
     criterion = ranking_loss_L1().to(device)
 
     # statistics

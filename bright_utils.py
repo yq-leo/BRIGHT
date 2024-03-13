@@ -3,7 +3,7 @@ import config
 import pickle
 from pyrwr.rwr import RWR
 import numpy as np
-import scipy
+import os
 import scipy.spatial as sp
 from sklearn.metrics.pairwise import cosine_similarity
 import networkx as nx
@@ -171,6 +171,10 @@ def ori2norm_F2T():
 split data
 '''
 def split_data(ratio):
+    dir_path = f"Data/{config.data}/split"
+    if not os.path.exists(dir_path):
+        os.mkdir(dir_path)
+
     f = open(config.grd_truth_file)
     grd_truth = []
     for line in f.readlines():
