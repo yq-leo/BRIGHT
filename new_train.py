@@ -37,7 +37,7 @@ def train(ratio, epoch_num, lr, dim, k, gamma, use_rwr=True, use_gcn=True):
     g2_data = Data(x=g2_data_x, edge_index=g2_edge_index)
     rwr_emd_1 = torch.tensor(rwr_emd_1, dtype=torch.float)
     rwr_emd_2 = torch.tensor(rwr_emd_2, dtype=torch.float)
-    device = torch.device('cuda:0')
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     criterion = ranking_loss_L1().to(device)
     if use_gcn and use_rwr:
         model = BRIGHT_A(dim, rwr_dim, g1_feat_dim).to(device)

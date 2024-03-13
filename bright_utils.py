@@ -333,8 +333,8 @@ def build_gcn_data_cora():
         g2_edge[1].append(int(edge[1]))
     norm_g1_file.close()
     norm_g2_file.close()
-    g1_edge = np.array(g1_edge, dtype=np.long)
-    g2_edge = np.array(g2_edge, dtype=np.long)
+    g1_edge = np.array(g1_edge, dtype=np.longlong)
+    g2_edge = np.array(g2_edge, dtype=np.longlong)
     data = np.load('%s.npz' % config.numpy_file)
     g1_feat, g2_feat = data['x1'], data['x2']
     gcn_data_file = open(config.gcn_data, 'wb')
@@ -366,8 +366,8 @@ def build_gcn_data():
         g2_edge[1].append(int(edge[1]))
     norm_g1_file.close()
     norm_g2_file.close()
-    g1_edge = np.array(g1_edge, dtype=np.long)
-    g2_edge = np.array(g2_edge, dtype=np.long)
+    g1_edge = np.array(g1_edge, dtype=np.longlong)
+    g2_edge = np.array(g2_edge, dtype=np.longlong)
     g1_feat = np.zeros([len(g1_node), len(g1_node)])
     for i in range(g1_feat.shape[0]):
         g1_feat[i][i] = 1
