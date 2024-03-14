@@ -2,6 +2,8 @@ scipy
 numpy
 pandas
 matplotlib
+notebook
+jupyterlab
 torch
 torch_geometric
 scikit-learn
