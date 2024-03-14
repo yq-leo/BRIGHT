@@ -99,7 +99,7 @@ def train(ratio, epoch_num, lr, dim, k, gamma, use_rwr=True, use_gcn=True):
             for i in range(len(result) - 1):
                 hits[hit_top_ks[i]] = result[i] / 100
             stat['hit'].append(hits)
-            stat['mrr'].append(result[-1] / 100)
+            stat['mrr'].append(result[-1])
             if epoch % 5 == 0:
                 print(result)
 
@@ -129,7 +129,7 @@ def train(ratio, epoch_num, lr, dim, k, gamma, use_rwr=True, use_gcn=True):
                 for i in range(len(result) - 1):
                     hits[hit_top_ks[i]] = result[i] / 100
                 stat['hit'].append(hits)
-                stat['mrr'].append(result[-1] / 100)
+                stat['mrr'].append(result[-1])
                 if epoch % 5 == 0:
                     print(result)
         else:
@@ -156,7 +156,7 @@ def train(ratio, epoch_num, lr, dim, k, gamma, use_rwr=True, use_gcn=True):
                 for i in range(len(result) - 1):
                     hits[hit_top_ks[i]] = result[i] / 100
                 stat['hit'].append(hits)
-                stat['mrr'].append(result[-1] / 100)
+                stat['mrr'].append(result[-1])
                 if epoch % 5 == 0:
                     print(result)
 
