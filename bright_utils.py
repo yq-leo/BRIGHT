@@ -168,14 +168,8 @@ def ori2norm_F2T():
     norm_g2_file.close()
     grd_truth_file.close()
 
-'''
-split data
-'''
-def split_data(ratio):
-    dir_path = f"Data/{config.data}/split"
-    if not os.path.exists(dir_path):
-        os.mkdir(dir_path)
 
+def split_data(ratio):
     f = open(config.grd_truth_file)
     grd_truth = []
     for line in f.readlines():
@@ -204,10 +198,11 @@ def split_data(ratio):
     seed_file_1.close()
     seed_file_2.close()
 
-"""
-generate candidate seeds for unsupervised setting with attribute similarity
-"""
+
 def get_candi_seed(ratio=0):
+    """
+    generate candidate seeds for unsupervised setting with attribute similarity
+    """
     data = np.load('%s.npz' % config.numpy_file)
     g1_feat, g2_feat = data['x1'], data['x2']
     sim = cosine_similarity(g1_feat, g2_feat)
@@ -231,11 +226,11 @@ def get_candi_seed(ratio=0):
     seed_file_1.close()
     seed_file_2.close()
 
-"""
-calculate shortest path distance embedding
-"""
-def shortest_path_emd(ratio):
 
+def shortest_path_emd(ratio):
+    """
+    calculate shortest path distance embedding
+    """
     seed_file_1 = open(config.seed_file1 + str(ratio) + ".pkl", 'rb')
     seed_file_2 = open(config.seed_file2 + str(ratio) + ".pkl", 'rb')
     seed1 = pickle.load(seed_file_1)
@@ -278,11 +273,10 @@ def shortest_path_emd(ratio):
     rwr_emd_2_file.close()
 
 
-"""
-calculate RWR embedding 
-"""
 def rwr_emd(ratio):
-
+    """
+    calculate RWR embedding
+    """
     rwr1 = RWR()
     rwr2 = RWR()
     rwr1.read_graph(config.norm_g1_file, "undirected")
@@ -313,11 +307,10 @@ def rwr_emd(ratio):
     seed_file_2.close()
 
 
-"""
-construct attribute for cora dataset
-"""
 def build_gcn_data_cora():
-
+    """
+    construct attribute for cora dataset
+    """
     norm_g1_file = open(config.norm_g1_file, 'r')
     norm_g2_file = open(config.norm_g2_file, 'r')
     g1_edge = [[], []]
@@ -346,11 +339,11 @@ def build_gcn_data_cora():
     pickle.dump([g1_feat, g1_edge, g2_feat, g2_edge], gcn_data_file)
     gcn_data_file.close()
 
-"""
-construct one-hot attribute for plain network for comparison 
-"""
-def build_gcn_data():
 
+def build_gcn_data():
+    """
+    construct one-hot attribute for plain network for comparison
+    """
     norm_g1_file = open(config.norm_g1_file, 'r')
     norm_g2_file = open(config.norm_g2_file, 'r')
     g1_edge = [[], []]
@@ -382,10 +375,11 @@ def build_gcn_data():
     gcn_data_file = open(config.gcn_data, 'wb')
     pickle.dump([g1_feat, g1_edge, g2_feat, g2_edge], gcn_data_file)
 
-"""
-random negative sampling
-"""
+
 def get_rand_neg(out1, out2, k, anchor1, anchor2):
+    """
+    random negative sampling
+    """
     neg1 = []
     neg2 = []
     t = len(anchor1)
@@ -406,10 +400,11 @@ def get_rand_neg(out1, out2, k, anchor1, anchor2):
     anchor2 = np.repeat(anchor2, k)
     return anchor1, anchor2, neg1, neg2
 
-"""
-advanced negative sampling 
-"""
+
 def get_neg(out1, out2, k, anchor1, anchor2):
+    """
+    advanced negative sampling
+    """
     neg1 = []
     neg2 = []
     t = len(anchor1)
@@ -433,10 +428,11 @@ def get_neg(out1, out2, k, anchor1, anchor2):
     neg2 = neg2.reshape((t * k,))
     return anchor1, anchor2, neg1, neg2
 
-"""
-evaluation
-"""
+
 def get_hits(out1, out2, test_pair, top_k=(1, 5, 10, 30, 50, 100)):
+    """
+    evaluation
+    """
     test_L = [pair[0] for pair in test_pair]
     test_R = [pair[1] for pair in test_pair]
     Lvec = np.array(out1[test_L])
@@ -483,10 +479,15 @@ def get_hits(out1, out2, test_pair, top_k=(1, 5, 10, 30, 50, 100)):
     print("MRR is %.2f%%" % (R_mrr * 100))
     return result
 
-"""
-the parameter norm refers to clean the ori_data into norm_data 
-"""
+
 def preprocess(ratio, used_rwr=True, norm=False):
+    """
+    the parameter norm refers to clean the ori_data into norm_data
+    """
+    dir_path = f"Data/{config.data}/split"
+    if not os.path.exists(dir_path):
+        os.mkdir(dir_path)
+
     if ratio != 0:
         if config.data == "F2T":
             if norm:
@@ -494,7 +495,7 @@ def preprocess(ratio, used_rwr=True, norm=False):
             split_data(ratio)
             build_gcn_data()
             if used_rwr:
-               rwr_emd(ratio)
+                rwr_emd(ratio)
             else:
                 shortest_path_emd(ratio)
 
@@ -502,6 +503,8 @@ def preprocess(ratio, used_rwr=True, norm=False):
             if config.data == "D2A":
                 if norm:
                     ori2norm_D2A()
+                split_data(ratio)
+                build_gcn_data()
                 if used_rwr:
                     rwr_emd(ratio)
                 else:
@@ -533,28 +536,3 @@ def preprocess(ratio, used_rwr=True, norm=False):
             get_candi_seed()
             build_gcn_data_cora()
             rwr_emd(ratio)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

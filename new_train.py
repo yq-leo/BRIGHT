@@ -163,11 +163,3 @@ def train(ratio, epoch_num, lr, dim, k, gamma, use_rwr=True, use_gcn=True):
     # write_training_setting(ratio, epoch_num, lr, dim, k, gamma, use_rwr, use_gcn)
     write_training_records_to_csv(epoch_num, stat, f"results/{config.data}_training_records.csv")
     plot_training_records()
-
-
-
-
-
-
-
-

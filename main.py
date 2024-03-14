@@ -5,8 +5,8 @@ import config
 """
 get the rwr embedding 
 """
-bright_utils.preprocess(0.2, False)
+bright_utils.preprocess(0.2, True, False)
 """
 train the model
 """
-train(0.2, 250, 0.0001, 128, 500, 10, True, True)
+train(0.2, 250, 0.0001, 128, 500, 10, True, False)

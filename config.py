@@ -1,4 +1,4 @@
-data = "Cora"
+data = "D2A"
 dim = 128
 norm_g1_file = "Data/" + data + "/norm_data/network1.tsv"
 norm_g2_file = "Data/" + data + "/norm_data/network2.tsv"
