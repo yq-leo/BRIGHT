@@ -1,6 +1,13 @@
 import bright_utils
 from new_train import train
 import config
+from argparse import ArgumentParser
+
+parser = ArgumentParser()
+parser.add_argument('--dataset', dest='dataset', type=str, default='PE',
+                    choices=['PE', 'F2T', 'Cora', 'Douban'],
+                    help='datasets: PE; ACM-DBLP; cora; foursquare-twitter; phone-email; Douban; flickr-lastfm')
+
 
 """
 get the rwr embedding 

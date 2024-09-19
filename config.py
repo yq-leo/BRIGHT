@@ -1,4 +1,17 @@
+# phone-email
+# data = "PE"
+
+# Foursquare-Twitter
 data = "F2T"
+
+# Cora
+# data = "Cora"
+# numpy_file = 'Data/Cora/ori_data/noisy-cora1-cora2'
+
+# Douban
+# data = "Douban"
+# numpy_file = 'Data/Douban/ori_data/Douban'
+
 dim = 128
 norm_g1_file = "Data/" + data + "/norm_data/network1.tsv"
 norm_g2_file = "Data/" + data + "/norm_data/network2.tsv"
@@ -12,5 +25,10 @@ rwr2_emd = "Data/" + data + "/split/rwr_emd2_"
 gcn_data = "Data/" + data + "/norm_data/gcn_data.pkl"
 g1_geo_data = "Data/" + data + "/norm_data/g1_geo.pkl"
 g2_geo_data = "Data/" + data + "/norm_data/g2_geo.pkl"
+# numpy_file = "Data/Douban/ori_data/Douban"
 # numpy_file = 'Data/DBLP/ori_data/new-ACM-DBLP'
 # numpy_file = 'Data/Cora/ori_data/noisy-cora1-cora2'
+
+
+
+

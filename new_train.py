@@ -1,4 +1,4 @@
-from model import ranking_loss_L1, BRIGHT_A, BRIGHT_U, BRIGHT_gcn
+from model import ranking_loss_L1, BRIGHT_A, BRIGHT_U, BRIGHT_gcn, RankingLossL1, RankingLossL1New
 from stat_utils import plot_training_records, write_training_records_to_csv
 import bright_utils
 import pickle
@@ -64,7 +64,9 @@ def train(ratio, epoch_num, lr, dim, k, gamma, use_rwr=True, use_gcn=True):
     }
     print(device)
     print(gpu_info)
-    criterion = ranking_loss_L1().to(device)
+    # criterion = ranking_loss_L1().to(device)
+    criterion = RankingLossL1(k, gamma).to(device)
+    # criterion1 = RankingLossL1New(k, gamma).to(device)
 
     # statistics
     stat = {'loss': [], 'mrr': [], 'hit': []}
@@ -80,13 +82,16 @@ def train(ratio, epoch_num, lr, dim, k, gamma, use_rwr=True, use_gcn=True):
         print("Start Training......")
         for epoch in range(epoch_num):
             start_time = time.time()
-            out1, out2 = model(rwr_emd_1_gpu, rwr_emd_2_gpu, g1_data_gpu, g2_data_gpu)
-            np_out1 = out1.detach().cpu()
-            np_out2 = out2.detach().cpu()
-            anchor1, anchor2, neg1, neg2 = bright_utils.get_neg(np_out1, np_out2, k, seed1, seed2)
             optimizer.zero_grad()
             out1, out2 = model(rwr_emd_1_gpu, rwr_emd_2_gpu, g1_data_gpu, g2_data_gpu)
-            loss = criterion(out1, out2, anchor1, anchor2, neg1, neg2, gamma)
+            loss = criterion(out1, out2, seed1, seed2)
+            # loss1 = criterion1(out1, out2, seed1, seed2)
+            np_out1 = out1.detach().cpu()
+            np_out2 = out2.detach().cpu()
+            # anchor1, anchor2, neg1, neg2 = bright_utils.get_neg(np_out1, np_out2, k, seed1, seed2)
+            # optimizer.zero_grad()
+            # out1, out2 = model(rwr_emd_1_gpu, rwr_emd_2_gpu, g1_data_gpu, g2_data_gpu)
+            # loss = criterion(out1, out2, anchor1, anchor2, neg1, neg2, gamma)
             loss.backward()
             optimizer.step()
             end_time = time.time()
@@ -111,14 +116,11 @@ def train(ratio, epoch_num, lr, dim, k, gamma, use_rwr=True, use_gcn=True):
             rwr_emd_2_gpu = rwr_emd_2.to(device)
             print("Start Training......")
             for epoch in range(epoch_num):
+                optimizer.zero_grad()
                 out1, out2 = model(rwr_emd_1_gpu, rwr_emd_2_gpu)
                 np_out1 = out1.detach().cpu()
                 np_out2 = out2.detach().cpu()
-                # negative sampling
-                anchor1, anchor2, neg1, neg2 = bright_utils.get_neg(np_out1, np_out2, k, seed1, seed2)
-                optimizer.zero_grad()
-                out1, out2 = model(rwr_emd_1_gpu, rwr_emd_2_gpu)
-                loss = criterion(out1, out2, anchor1, anchor2, neg1, neg2, gamma)
+                loss = criterion(out1, out2, seed1, seed2)
                 loss.backward()
                 optimizer.step()
                 print("Epoch: ", epoch)

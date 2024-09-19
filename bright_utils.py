@@ -7,6 +7,7 @@ import os
 import scipy.spatial as sp
 from sklearn.metrics.pairwise import cosine_similarity
 import networkx as nx
+import scipy
 
 
 '''
@@ -46,6 +47,70 @@ def ori2norm_Cora():
     grd_truth_file.close()
 
 
+def ori2norm_Douban():
+    data_name = 'Data/Douban/ori_data/Douban'
+    data = np.load('%s.npz' % data_name)
+    edge_index1, edge_index2 = data['edge_index1'], data['edge_index2']
+    gnd = data['gnd']
+    norm_g1_edge = []
+    norm_g2_edge = []
+    for i in range(len(edge_index1[0])):
+        if (edge_index1[0][i], edge_index1[1][i]) not in norm_g1_edge:
+            norm_g1_edge.append((edge_index1[0][i], edge_index1[1][i]))
+        if (edge_index1[1][i], edge_index1[0][i]) not in norm_g1_edge:
+            norm_g1_edge.append((edge_index1[1][i], edge_index1[0][i]))
+    for i in range(len(edge_index2[0])):
+        if (edge_index2[0][i], edge_index2[1][i]) not in norm_g2_edge:
+            norm_g2_edge.append((edge_index2[0][i], edge_index2[1][i]))
+        if (edge_index2[1][i], edge_index2[0][i]) not in norm_g2_edge:
+            norm_g2_edge.append((edge_index2[1][i], edge_index2[0][i]))
+    norm_g1_file = open("Data/Douban/norm_data/network1.tsv", 'w')
+    norm_g2_file = open("Data/Douban/norm_data/network2.tsv", 'w')
+    for edge in norm_g1_edge:
+        norm_g1_file.write(str(list(edge)[0]) + " " + str(list(edge)[1]) + " " + "1" + '\n')
+    for edge in norm_g2_edge:
+        norm_g2_file.write(str(list(edge)[0]) + " " + str(list(edge)[1]) + " " + "1" + '\n')
+    grd_truth_file = open("Data/Douban/norm_data/grd.tsv", 'w')
+    for node1, node2 in gnd:
+        grd_truth_file.write(str(node1) + " " + str(node2) + '\n')
+    norm_g1_file.close()
+    norm_g2_file.close()
+    grd_truth_file.close()
+
+
+def ori2norm_PE():
+    dataset = 'PE'
+    data_name = 'Data/PE/ori_data/phone-email'
+    data = np.load('%s.npz' % data_name)
+    edge_index1, edge_index2 = data['edge_index1'], data['edge_index2']
+    pos_pairs, test_pairs = data['pos_pairs'], data['test_pairs']
+    gnd = np.concatenate((pos_pairs, test_pairs), axis=0)
+    np.random.shuffle(gnd)
+    norm_g1_edge = []
+    norm_g2_edge = []
+    for i in range(len(edge_index1[0])):
+        if (edge_index1[0][i], edge_index1[1][i]) not in norm_g1_edge:
+            norm_g1_edge.append((edge_index1[0][i], edge_index1[1][i]))
+        if (edge_index1[1][i], edge_index1[0][i]) not in norm_g1_edge:
+            norm_g1_edge.append((edge_index1[1][i], edge_index1[0][i]))
+    for i in range(len(edge_index2[0])):
+        if (edge_index2[0][i], edge_index2[1][i]) not in norm_g2_edge:
+            norm_g2_edge.append((edge_index2[0][i], edge_index2[1][i]))
+        if (edge_index2[1][i], edge_index2[0][i]) not in norm_g2_edge:
+            norm_g2_edge.append((edge_index2[1][i], edge_index2[0][i]))
+    norm_g1_file = open(f"Data/{dataset}/norm_data/network1.tsv", 'w')
+    norm_g2_file = open(f"Data/{dataset}/norm_data/network2.tsv", 'w')
+    for edge in norm_g1_edge:
+        norm_g1_file.write(str(list(edge)[0]) + " " + str(list(edge)[1]) + " " + "1" + '\n')
+    for edge in norm_g2_edge:
+        norm_g2_file.write(str(list(edge)[0]) + " " + str(list(edge)[1]) + " " + "1" + '\n')
+    grd_truth_file = open(f"Data/{dataset}/norm_data/grd.tsv", 'w')
+    for node1, node2 in gnd:
+        grd_truth_file.write(str(node1) + " " + str(node2) + '\n')
+    norm_g1_file.close()
+    norm_g2_file.close()
+    grd_truth_file.close()
+
 
 def ori2norm_D2A():
     f1 = open("Data/D2A/ori_data/dblp.number", 'r')
@@ -73,6 +138,7 @@ def ori2norm_D2A():
     ori_g2[0] = list(ori_g2[0])
     random.shuffle(ori_g1[0])
     random.shuffle(ori_g2[0])
+
     map_g1 = {}
     map_g2 = {}
     for i in range(len(ori_g1[0])):
@@ -429,6 +495,31 @@ def get_neg(out1, out2, k, anchor1, anchor2):
     return anchor1, anchor2, neg1, neg2
 
 
+def get_metrics(out1, out2, test_pairs, hit_top_ks=(1, 5, 10, 30, 50, 100)):
+    hits = {}
+
+    anchor1_embeddings = out1[test_pairs[:, 0]]
+    anchor2_embeddings = out2[test_pairs[:, 1]]
+
+    distances1 = scipy.spatial.distance.cdist(anchor1_embeddings, out2, metric='cityblock')
+    distances2 = scipy.spatial.distance.cdist(anchor2_embeddings, out1, metric='cityblock')
+    ranks1 = np.argsort(distances1, axis=1)
+    ranks2 = np.argsort(distances2, axis=1)
+
+    signal1_hit = ranks1[:, :hit_top_ks[-1]] == np.expand_dims(test_pairs[:, 1], -1)
+    signal2_hit = ranks2[:, :hit_top_ks[-1]] == np.expand_dims(test_pairs[:, 0], -1)
+    for k in hit_top_ks:
+        hits_ltr = np.sum(signal1_hit[:, :k]) / test_pairs.shape[0]
+        hits_rtl = np.sum(signal2_hit[:, :k]) / test_pairs.shape[0]
+        hits[k] = max(hits_ltr, hits_rtl)
+
+    mrr_ltr = np.mean(1 / (np.where(ranks1 == np.expand_dims(test_pairs[:, 1], -1))[1] + 1))
+    mrr_rtl = np.mean(1 / (np.where(ranks2 == np.expand_dims(test_pairs[:, 0], -1))[1] + 1))
+    mrr = max(mrr_ltr, mrr_rtl)
+
+    return hits, mrr
+
+
 def get_hits(out1, out2, test_pair, top_k=(1, 5, 10, 30, 50, 100)):
     """
     evaluation
@@ -477,6 +568,7 @@ def get_hits(out1, out2, test_pair, top_k=(1, 5, 10, 30, 50, 100)):
     for i in range(len(top_rl)):
         print('Hits@%d: %.2f%%' % (top_k[i], top_rl[i] / len(test_pair) * 100))
     print("MRR is %.2f%%" % (R_mrr * 100))
+
     return result
 
 
@@ -521,6 +613,19 @@ def preprocess(ratio, used_rwr=True, norm=False):
                 split_data(ratio)
                 build_gcn_data_cora()
                 rwr_emd(ratio)
+            if config.data == "Douban":
+                if norm:
+                    ori2norm_Douban()
+                split_data(ratio)
+                build_gcn_data_cora()
+                rwr_emd(ratio)
+            if config.data == "PE":
+                if norm:
+                    ori2norm_PE()
+                split_data(ratio)
+                build_gcn_data()
+                rwr_emd(ratio)
+
     else:
         if config.data == "Cora":
             if norm:
