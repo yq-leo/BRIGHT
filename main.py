@@ -21,6 +21,7 @@ parser.add_argument('--robust', dest='robust', action='store_true', help='remove
 parser.add_argument('--record', dest='record', action='store_true', help='record results')
 
 args = parser.parse_args()
+print(args)
 
 
 class Config:
@@ -104,7 +105,7 @@ if args.record:
 
     with open(out_path, "a", newline='') as f:
         writer = csv.writer(f)
-        if exp_name == "edge_noise":
+        if args.edge_noise > 0:
             header = f"{args.dataset}_({args.edge_noise:.1f})"
         else:
             header = f"{args.dataset}_({args.attr_noise:.1f})"
@@ -114,4 +115,4 @@ if args.record:
         if args.robust:
             writer.writerow(
                 [header + "_robust"] + [f"{p:.3f}" for p in final_hits_robust.values()] + [f"{final_mrr_robust:.3f}"] + [
-                    f"{p:.3f}" for p in final_hits_robust_std.values()] + [f"{final_mrr_robust_std:.3f}"])
+                    f"{p:.3f}" for p in final_hits_robust_std.values()] + [f"{final_mrr_robust_std:.10f}"])
