@@ -83,9 +83,9 @@ for key in final_hits_list:
     final_hits_robust[key] = final_hits_k_robust.mean()
     final_hits_robust_std[key] = final_hits_k_robust.std()
 
-final_mrr = np.sort(np.array(final_mrr_list))
-final_mrr = final_mrr.mean()
-final_mrr_std = final_mrr.std()
+final_mrr_list = np.sort(np.array(final_mrr_list))
+final_mrr = final_mrr_list.mean()
+final_mrr_std = final_mrr_list.std()
 
 final_mrr_list_robust = bright_utils.rm_out(final_mrr_list)
 final_mrr_robust = np.sort(np.array(final_mrr_list_robust)).mean()
@@ -115,4 +115,4 @@ if args.record:
         if args.robust:
             writer.writerow(
                 [header + "_robust"] + [f"{p:.3f}" for p in final_hits_robust.values()] + [f"{final_mrr_robust:.3f}"] + [
-                    f"{p:.3f}" for p in final_hits_robust_std.values()] + [f"{final_mrr_robust_std:.10f}"])
+                    f"{p:.3f}" for p in final_hits_robust_std.values()] + [f"{final_mrr_robust_std:.3f}"])
