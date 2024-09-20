@@ -2,7 +2,6 @@ import csv
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import config
 
 
 def write_training_setting():
@@ -45,7 +44,7 @@ def read_training_records_from_csv(file_path, hit_top_ks = (1, 5, 10, 30, 50, 10
     return loss, mrr, hits
 
 
-def plot_training_records():
+def plot_training_records(config):
     data = config.data
     # Load your DataFrame
     df = pd.read_csv(f'results/{data}_training_records.csv')  # Update with your CSV file path

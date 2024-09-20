@@ -1,5 +1,5 @@
 import random
-import config
+# import config
 import pickle
 from pyrwr.rwr import RWR
 import numpy as np
@@ -78,7 +78,7 @@ def ori2norm_Douban():
     grd_truth_file.close()
 
 
-def ori2norm_PE():
+def ori2norm_PE(edge_noise=0):
     dataset = 'PE'
     data_name = 'Data/PE/ori_data/phone-email'
     data = np.load('%s.npz' % data_name)
@@ -86,18 +86,25 @@ def ori2norm_PE():
     pos_pairs, test_pairs = data['pos_pairs'], data['test_pairs']
     gnd = np.concatenate((pos_pairs, test_pairs), axis=0)
     np.random.shuffle(gnd)
-    norm_g1_edge = []
-    norm_g2_edge = []
-    for i in range(len(edge_index1[0])):
-        if (edge_index1[0][i], edge_index1[1][i]) not in norm_g1_edge:
-            norm_g1_edge.append((edge_index1[0][i], edge_index1[1][i]))
-        if (edge_index1[1][i], edge_index1[0][i]) not in norm_g1_edge:
-            norm_g1_edge.append((edge_index1[1][i], edge_index1[0][i]))
-    for i in range(len(edge_index2[0])):
-        if (edge_index2[0][i], edge_index2[1][i]) not in norm_g2_edge:
-            norm_g2_edge.append((edge_index2[0][i], edge_index2[1][i]))
-        if (edge_index2[1][i], edge_index2[0][i]) not in norm_g2_edge:
-            norm_g2_edge.append((edge_index2[1][i], edge_index2[0][i]))
+    # norm_g1_edge = []
+    # norm_g2_edge = []
+    # for i in range(len(edge_index1[0])):
+    #     if (edge_index1[0][i], edge_index1[1][i]) not in norm_g1_edge:
+    #         norm_g1_edge.append((edge_index1[0][i], edge_index1[1][i]))
+    #     if (edge_index1[1][i], edge_index1[0][i]) not in norm_g1_edge:
+    #         norm_g1_edge.append((edge_index1[1][i], edge_index1[0][i]))
+    # for i in range(len(edge_index2[0])):
+    #     if (edge_index2[0][i], edge_index2[1][i]) not in norm_g2_edge:
+    #         norm_g2_edge.append((edge_index2[0][i], edge_index2[1][i]))
+    #     if (edge_index2[1][i], edge_index2[0][i]) not in norm_g2_edge:
+    #         norm_g2_edge.append((edge_index2[1][i], edge_index2[0][i]))
+    norm_g1_edge = edge_index1.T.tolist()
+    norm_g2_edge = edge_index2.T.tolist()
+
+    # add edge noise to target graph
+    n2 = edge_index2.max() + 1
+    norm_g2_edge = add_edge_noise(norm_g2_edge, n2, edge_noise)
+
     norm_g1_file = open(f"Data/{dataset}/norm_data/network1.tsv", 'w')
     norm_g2_file = open(f"Data/{dataset}/norm_data/network2.tsv", 'w')
     for edge in norm_g1_edge:
@@ -173,53 +180,67 @@ def ori2norm_D2A():
     grd_truth_file.close()
 
 
-def ori2norm_F2T():
+def ori2norm_F2T(edge_noise=0):
+    edge_path = "Data/F2T/norm_data/edge_index.pkl"
+    if not os.path.exists(edge_path):
+        f1 = open("Data/F2T/ori_data/foursqure.number", 'r')
+        f2 = open("Data/F2T/ori_data/twitter.number", 'r')
+        # seed_file = open("Data/F2T/ori_data/groundtruth.number", 'r')
+        ori_g1 = [set(), []]
+        ori_g2 = [set(), []]
 
-    f1 = open("Data/F2T/ori_data/foursqure.number", 'r')
-    f2 = open("Data/F2T/ori_data/twitter.number", 'r')
+        for line in f1.readlines():
+            edge = line.strip('\n').split()
+            ori_g1[0].add(int(edge[0]))
+            ori_g1[0].add(int(edge[1]))
+            if (int(edge[0]), int(edge[1])) not in ori_g1[1]:
+                ori_g1[1].append((int(edge[0]), int(edge[1])))
+            if (int(edge[1]), int(edge[0])) not in ori_g1[1]:
+                ori_g1[1].append((int(edge[1]), int(edge[0])))
+        for line in f2.readlines():
+            edge = line.strip('\n').split()
+            ori_g2[0].add(int(edge[0]))
+            ori_g2[0].add(int(edge[1]))
+            if (int(edge[0]), int(edge[1])) not in ori_g2[1]:
+                ori_g2[1].append((int(edge[0]), int(edge[1])))
+            if (int(edge[1]), int(edge[0])) not in ori_g2[1]:
+                ori_g2[1].append((int(edge[1]), int(edge[0])))
+        ori_g1[0] = list(ori_g1[0])
+        ori_g2[0] = list(ori_g2[0])
+        random.shuffle(ori_g1[0])
+        random.shuffle(ori_g2[0])
+        map_g1 = {}
+        map_g2 = {}
+        for i in range(len(ori_g1[0])):
+            map_g1[ori_g1[0][i]] = i
+        for i in range(len(ori_g2[0])):
+            map_g2[ori_g2[0][i]] = i
+        norm_g1_edge = []
+        norm_g2_edge = []
+        for edge in ori_g1[1]:
+            norm_g1_edge.append([map_g1[list(edge)[0]], map_g1[list(edge)[1]]])
+        for edge in ori_g2[1]:
+            norm_g2_edge.append([map_g2[list(edge)[0]], map_g2[list(edge)[1]]])
+        f1.close()
+        f2.close()
+
+        with open(edge_path, 'wb') as f:
+            pickle.dump([norm_g1_edge, norm_g2_edge, map_g1, map_g2], f)
+
+    else:
+        with open(edge_path, 'rb') as f:
+            norm_g1_edge, norm_g2_edge, map_g1, map_g2 = pickle.load(f)
+
     seed_file = open("Data/F2T/ori_data/groundtruth.number", 'r')
-    ori_g1 = [set(), []]
-    ori_g2 = [set(), []]
-
-    for line in f1.readlines():
-        edge = line.strip('\n').split()
-        ori_g1[0].add(int(edge[0]))
-        ori_g1[0].add(int(edge[1]))
-        if (int(edge[0]), int(edge[1])) not in ori_g1[1]:
-            ori_g1[1].append((int(edge[0]), int(edge[1])))
-        if (int(edge[1]), int(edge[0])) not in ori_g1[1]:
-            ori_g1[1].append((int(edge[1]), int(edge[0])))
-    for line in f2.readlines():
-        edge = line.strip('\n').split()
-        ori_g2[0].add(int(edge[0]))
-        ori_g2[0].add(int(edge[1]))
-        if (int(edge[0]), int(edge[1])) not in ori_g2[1]:
-            ori_g2[1].append((int(edge[0]), int(edge[1])))
-        if (int(edge[1]), int(edge[0])) not in ori_g2[1]:
-            ori_g2[1].append((int(edge[1]), int(edge[0])))
-    ori_g1[0] = list(ori_g1[0])
-    ori_g2[0] = list(ori_g2[0])
-    random.shuffle(ori_g1[0])
-    random.shuffle(ori_g2[0])
-    map_g1 = {}
-    map_g2 = {}
-    for i in range(len(ori_g1[0])):
-        map_g1[ori_g1[0][i]] = i
-    for i in range(len(ori_g2[0])):
-        map_g2[ori_g2[0][i]] = i
-    norm_g1_edge = []
-    norm_g2_edge = []
-    for edge in ori_g1[1]:
-        norm_g1_edge.append([map_g1[list(edge)[0]], map_g1[list(edge)[1]]])
-    for edge in ori_g2[1]:
-        norm_g2_edge.append([map_g2[list(edge)[0]], map_g2[list(edge)[1]]])
-    f1.close()
-    f2.close()
     grd_truth = []
     for line in seed_file.readlines():
         node = line.strip('\n')
         grd_truth.append([map_g1[int(node)], map_g2[int(node)]])
     seed_file.close()
+
+    # add edge noise to target graph
+    n2 = len(map_g2)
+    norm_g2_edge = add_edge_noise(norm_g2_edge, n2, edge_noise)
 
     norm_g1_file = open("Data/F2T/norm_data/network1.tsv", 'w')
     norm_g2_file = open("Data/F2T/norm_data/network2.tsv", 'w')
@@ -235,18 +256,33 @@ def ori2norm_F2T():
     grd_truth_file.close()
 
 
-def split_data(ratio):
-    f = open(config.grd_truth_file)
-    grd_truth = []
-    for line in f.readlines():
-        pair = line.strip('\n').split()
-        grd_truth.append([int(pair[0]), int(pair[1])])
-    f.close()
-    total = len(grd_truth)
-    random.shuffle(grd_truth)
-    train = grd_truth[0:int(total*ratio)]
-    test = grd_truth[int(total*ratio):total]
-    train_file = open(config.train_file + str(ratio) +".pkl", 'wb')
+def split_data(ratio, config):
+    # f = open(config.grd_truth_file)
+    # grd_truth = []
+    # for line in f.readlines():
+    #     pair = line.strip('\n').split()
+    #     grd_truth.append([int(pair[0]), int(pair[1])])
+    # f.close()
+    # total = len(grd_truth)
+    # random.shuffle(grd_truth)
+
+    assert config.data in ['PE', 'F2T', 'Cora', 'Douban'], "Invalid dataset, adjust split_data to proceed"
+    if config.data in ['PE, Douban']:
+        data = np.load('Data/PE/ori_data/phone-email.npz')
+        train = data['pos_pairs'].tolist()
+        test = data['test_pairs'].tolist()
+    else:
+        f = open(config.grd_truth_file)
+        grd_truth = []
+        for line in f.readlines():
+            pair = line.strip('\n').split()
+            grd_truth.append([int(pair[0]), int(pair[1])])
+        f.close()
+        total = len(grd_truth)
+        train = grd_truth[0:int(total*ratio)]
+        test = grd_truth[int(total*ratio):total]
+
+    train_file = open(config.train_file + str(ratio) + ".pkl", 'wb')
     test_file = open(config.test_file + str(ratio) + ".pkl", 'wb')
     pickle.dump(train, train_file)
     pickle.dump(test, test_file)
@@ -265,7 +301,7 @@ def split_data(ratio):
     seed_file_2.close()
 
 
-def get_candi_seed(ratio=0):
+def get_candi_seed(ratio=0, config=None):
     """
     generate candidate seeds for unsupervised setting with attribute similarity
     """
@@ -293,7 +329,7 @@ def get_candi_seed(ratio=0):
     seed_file_2.close()
 
 
-def shortest_path_emd(ratio):
+def shortest_path_emd(ratio, config):
     """
     calculate shortest path distance embedding
     """
@@ -339,7 +375,7 @@ def shortest_path_emd(ratio):
     rwr_emd_2_file.close()
 
 
-def rwr_emd(ratio):
+def rwr_emd(ratio, config):
     """
     calculate RWR embedding
     """
@@ -373,7 +409,7 @@ def rwr_emd(ratio):
     seed_file_2.close()
 
 
-def build_gcn_data_cora():
+def build_gcn_data_cora(config):
     """
     construct attribute for cora dataset
     """
@@ -401,12 +437,13 @@ def build_gcn_data_cora():
     g2_edge = np.array(g2_edge, dtype=np.longlong)
     data = np.load('%s.npz' % config.numpy_file)
     g1_feat, g2_feat = data['x1'], data['x2']
+    g2_feat = add_attr_noise(g2_feat, config.attr_noise)
     gcn_data_file = open(config.gcn_data, 'wb')
     pickle.dump([g1_feat, g1_edge, g2_feat, g2_edge], gcn_data_file)
     gcn_data_file.close()
 
 
-def build_gcn_data():
+def build_gcn_data(config):
     """
     construct one-hot attribute for plain network for comparison
     """
@@ -556,10 +593,6 @@ def get_hits(out1, out2, test_pair, top_k=(1, 5, 10, 30, 50, 100)):
                 top_rl[j] += 1
     L_mrr = L_mrr/len(test_pair)
     R_mrr = R_mrr/len(test_pair)
-    result = []
-    for i in range(len(top_lr)):
-        result.append(top_lr[i] / len(test_pair) * 100)
-    result.append(L_mrr)
     print('For each left:')
     for i in range(len(top_lr)):
         print('Hits@%d: %.2f%%' % (top_k[i], top_lr[i] / len(test_pair) * 100))
@@ -569,10 +602,15 @@ def get_hits(out1, out2, test_pair, top_k=(1, 5, 10, 30, 50, 100)):
         print('Hits@%d: %.2f%%' % (top_k[i], top_rl[i] / len(test_pair) * 100))
     print("MRR is %.2f%%" % (R_mrr * 100))
 
+    result = []
+    for i in range(len(top_lr)):
+        result.append((top_lr[i] + top_rl[i]) / (2 * len(test_pair)) * 100)
+    result.append((L_mrr + R_mrr) / 2)
+
     return result
 
 
-def preprocess(ratio, used_rwr=True, norm=False):
+def preprocess(ratio, used_rwr=True, norm=False, config=None):
     """
     the parameter norm refers to clean the ori_data into norm_data
     """
@@ -583,61 +621,118 @@ def preprocess(ratio, used_rwr=True, norm=False):
     if ratio != 0:
         if config.data == "F2T":
             if norm:
-                ori2norm_F2T()
-            split_data(ratio)
-            build_gcn_data()
+                ori2norm_F2T(config.edge_noise)
+            split_data(ratio, config)
+            build_gcn_data(config)
             if used_rwr:
-                rwr_emd(ratio)
+                rwr_emd(ratio, config)
             else:
-                shortest_path_emd(ratio)
+                shortest_path_emd(ratio, config)
 
         else:
             if config.data == "D2A":
                 if norm:
                     ori2norm_D2A()
-                split_data(ratio)
-                build_gcn_data()
+                split_data(ratio, config)
+                build_gcn_data(config)
                 if used_rwr:
-                    rwr_emd(ratio)
+                    rwr_emd(ratio, config)
                 else:
-                    shortest_path_emd(ratio)
+                    shortest_path_emd(ratio, config)
             if config.data == "Cora":
                 if norm:
                     ori2norm_Cora()
-                split_data(ratio)
-                build_gcn_data_cora()
-                rwr_emd(ratio)
+                split_data(ratio, config)
+                build_gcn_data_cora(config)
+                rwr_emd(ratio, config)
             if config.data == "DBLP":
                 if norm:
                     ori2norm_Cora()
-                split_data(ratio)
-                build_gcn_data_cora()
-                rwr_emd(ratio)
+                split_data(ratio, config)
+                build_gcn_data_cora(config)
+                rwr_emd(ratio, config)
             if config.data == "Douban":
                 if norm:
                     ori2norm_Douban()
-                split_data(ratio)
-                build_gcn_data_cora()
-                rwr_emd(ratio)
+                split_data(ratio, config)
+                build_gcn_data_cora(config)
+                rwr_emd(ratio, config)
             if config.data == "PE":
                 if norm:
-                    ori2norm_PE()
-                split_data(ratio)
-                build_gcn_data()
-                rwr_emd(ratio)
+                    ori2norm_PE(config.edge_noise)
+                split_data(ratio, config)
+                build_gcn_data(config)
+                rwr_emd(ratio, config)
 
     else:
         if config.data == "Cora":
             if norm:
                 ori2norm_Cora()
-            split_data(ratio)
-            get_candi_seed()
-            build_gcn_data_cora()
-            rwr_emd(ratio)
+            split_data(ratio, config)
+            get_candi_seed(config=config)
+            build_gcn_data_cora(config)
+            rwr_emd(ratio, config)
         if config.data == "DBLP":
             if norm:
                 ori2norm_Cora()
-            split_data(ratio)
-            get_candi_seed()
-            build_gcn_data_cora()
-            rwr_emd(ratio)
+            split_data(ratio, config)
+            get_candi_seed(config=config)
+            build_gcn_data_cora(config)
+            rwr_emd(ratio, config)
+
+
+def add_edge_noise(edge_index, n, noise_rate):
+    """
+    add edge noise to target graph
+    """
+
+    print("Adding noise to target graph...", end="")
+    edge_arr = np.array(edge_index)
+    num_perturb_edges = int(noise_rate * len(edge_arr))
+    G = nx.Graph()
+    G.add_nodes_from(np.arange(n))
+    G.add_edges_from(edge_arr)
+
+    cnt = 0
+    while cnt < num_perturb_edges:
+        src = np.random.randint(0, n)
+        dst = np.random.randint(0, n)
+        if G.has_edge(src, dst):
+            G.remove_edge(src, dst)
+            if not nx.is_connected(G):
+                G.add_edge(src, dst)
+            else:
+                cnt += 1
+        else:
+            G.add_edge(src, dst)
+            cnt += 1
+
+    print("done, num of perturbed edges: %d" % cnt)
+    edge_arr = np.array(list(G.edges))
+    edge_arr = np.concatenate([edge_arr, edge_arr[:, ::-1]], axis=0)
+    np.random.shuffle(edge_arr)
+
+    return edge_arr.tolist()
+
+
+def add_attr_noise(x, attr_noise):
+    num_node, num_attr = x.shape
+    num_perturb_attrs = int(num_attr * attr_noise)
+
+    perturbed_attr = np.random.choice(num_attr, num_perturb_attrs, replace=False)
+    x[:, perturbed_attr] = 1 - x[:, perturbed_attr]
+
+    return x
+
+
+def rm_out(arr):
+    """
+    Remove outliers from an array
+    :param arr: input array
+    :return:  without outliers
+    """
+    arr = np.sort(arr)
+    if len(arr) <= 3:
+        return arr
+    num_rm = len(arr) // 2
+    return arr[int(num_rm / 2) + num_rm % 2: -(num_rm // 2)]

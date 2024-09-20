@@ -4,12 +4,12 @@ import bright_utils
 import pickle
 import torch
 from torch_geometric.data import Data
-import config
 import time
+import numpy as np
+from collections import defaultdict
 
 
-def train(ratio, epoch_num, lr, dim, k, gamma, use_rwr=True, use_gcn=True):
-
+def train(ratio, epoch_num, lr, dim, k, gamma, use_rwr=True, use_gcn=True, config=None):
     # graph data (edge & node attributes)
     gcn_data_file = open(config.gcn_data, 'rb')
     # FIXME: what is g_edge? dimensionality doesn't match with paper (cora-1 12668 vs 5806)
@@ -163,5 +163,12 @@ def train(ratio, epoch_num, lr, dim, k, gamma, use_rwr=True, use_gcn=True):
                     print(result)
 
     # write_training_setting(ratio, epoch_num, lr, dim, k, gamma, use_rwr, use_gcn)
-    write_training_records_to_csv(epoch_num, stat, f"results/{config.data}_training_records.csv")
-    plot_training_records()
+    # write_training_records_to_csv(epoch_num, stat, f"results/{config.data}_training_records.csv")
+    # plot_training_records(config)
+
+    hits = {}
+    for key in stat['hit'][-1].keys():
+        hits[key] = np.max([row[key] for row in stat['hit']])
+    mrr = np.max(stat['mrr'])
+
+    return hits, mrr
