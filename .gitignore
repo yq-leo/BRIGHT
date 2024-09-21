@@ -4,5 +4,5 @@
 **/split/
 **/gcn_data.pkl
 Data/*/norm_data
-error_edge.log
-error_attr.log
+*.log
+
