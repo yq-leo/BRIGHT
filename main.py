@@ -69,7 +69,7 @@ for run in range(args.runs):
     """
     train the model
     """
-    hits, mrr = train(0.2, args.epochs, 0.0001, 128, 500, 10, True, use_gcn, config)
+    hits, mrr = train(0.2, args.epochs, 0.0005, 128, 500, 10, True, use_gcn, config)
     for key in hits:
         final_hits_list[key].append(hits[key])
     final_mrr_list.append(mrr)
