@@ -437,7 +437,7 @@ def build_gcn_data_cora(config):
     g2_edge = np.array(g2_edge, dtype=np.longlong)
     data = np.load('%s.npz' % config.numpy_file)
     g1_feat, g2_feat = data['x1'], data['x2']
-    g2_feat = add_attr_noise(g2_feat, config.attr_noise)
+    g2_feat = add_attr_noise(g2_feat, config.attr_noise, config.strong_noise)
     gcn_data_file = open(config.gcn_data, 'wb')
     pickle.dump([g1_feat, g1_edge, g2_feat, g2_edge], gcn_data_file)
     gcn_data_file.close()
@@ -715,12 +715,18 @@ def add_edge_noise(edge_index, n, noise_rate):
     return edge_arr.tolist()
 
 
-def add_attr_noise(x, attr_noise):
+def add_attr_noise(x, attr_noise, strong_noise=False):
     num_node, num_attr = x.shape
     num_perturb_attrs = int(num_attr * attr_noise)
 
-    perturbed_attr = np.random.choice(num_attr, num_perturb_attrs, replace=False)
-    x[:, perturbed_attr] = 1 - x[:, perturbed_attr]
+    if strong_noise:
+        for i in range(num_node):
+            perturbed_attr = np.random.choice(num_attr, num_perturb_attrs, replace=False)
+            x[i, perturbed_attr] = 1 - x[i, perturbed_attr]
+
+    else:
+        perturbed_attr = np.random.choice(num_attr, num_perturb_attrs, replace=False)
+        x[:, perturbed_attr] = 1 - x[:, perturbed_attr]
 
     return x
 

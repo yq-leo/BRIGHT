@@ -19,13 +19,14 @@ parser.add_argument('--edge_noise', dest='edge_noise', type=float, default=0.0, 
 parser.add_argument('--attr_noise', dest='attr_noise', type=float, default=0.0, help='attribute noise')
 parser.add_argument('--robust', dest='robust', action='store_true', help='remove metric outliers')
 parser.add_argument('--record', dest='record', action='store_true', help='record results')
+parser.add_argument('--strong_noise', dest='strong_noise', action='store_true', help='use strong attribute noise')
 
 args = parser.parse_args()
 print(args)
 
 
 class Config:
-    def __init__(self, data, numpy_file=None, edge_noise=0.0, attr_noise=0.0):
+    def __init__(self, data, numpy_file=None, edge_noise=0.0, attr_noise=0.0, strong_noise=False):
         self.data = data
         self.numpy_file = numpy_file
 
@@ -45,6 +46,7 @@ class Config:
 
         self.edge_noise = edge_noise
         self.attr_noise = attr_noise
+        self.strong_noise = strong_noise
 
 
 numpy_file_dict = {
@@ -55,7 +57,7 @@ norm = True if args.dataset in ['PE', 'F2T'] else False
 use_gcn = False if args.dataset in ['PE', 'F2T'] else True
 
 numpy_file = numpy_file_dict[args.dataset] if args.dataset in numpy_file_dict else None
-config = Config(args.dataset, numpy_file, args.edge_noise, args.attr_noise)
+config = Config(args.dataset, numpy_file, args.edge_noise, args.attr_noise, args.strong_noise)
 
 final_hits_list = defaultdict(list)
 final_mrr_list = list()
