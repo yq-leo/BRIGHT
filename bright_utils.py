@@ -604,8 +604,8 @@ def get_hits(out1, out2, test_pair, top_k=(1, 5, 10, 30, 50, 100)):
 
     result = []
     for i in range(len(top_lr)):
-        result.append((top_lr[i] + top_rl[i]) / (2 * len(test_pair)) * 100)
-    result.append((L_mrr + R_mrr) / 2)
+        result.append(top_lr[i] / len(test_pair) * 100)
+    result.append(L_mrr)
 
     return result
 
